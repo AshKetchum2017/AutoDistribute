@@ -1,0 +1,18 @@
+2026-07-01
++ Menambahkan fitur Kiss Cut related dan Auto Distribute untuk mendistribusikan objek yang diseleksi secara otomatis.
++ Pre-Sensor dan Post-Sensor untuk menentukan fitur yang akan digunakan, apakah sebelum pemberian sensor atau sesudah.
++ Pilihan Rotate -90° pada Pre-Sensor untuk memutar objek yang diseleksi 90° searah jarum jam.
++ Pilihan Master dan Per-Page Sensor pada Post-Sensor untuk menentukan apakah sensor yang digunakan sama untuk semua page atau berbeda di masing-masing page.
++ Pilihan Rotate -90° pada Auto Distribute untuk memutar objek yang diseleksi 90° searah jarum jam.
+
+2026-09-11
+[Auto Distribute UF - Refactor]
++ Menggabungkan ObjectContainer ke Main UF: Design, Cutting Line, Remove, Clear, dan Objects. Process memakai antrean yang tampil langsung, tanpa Save/draft terpisah.
++ Menambahkan rotasi CW -90 derajat / CCW +90 derajat yang saling eksklusif; tanpa pilihan berarti tidak diputar.
++ Kiss A menempatkan Design pada Layer 1 dengan print/export disabled dan Cut Line pada Layer 2 dengan print/export enabled. Die A menempatkan masing-masing objek pada page terpisah di Layer 1 dengan print/export enabled.
++ Menambahkan Sequentially: Die A mengikuti urutan ListBox; Kiss A memasangkan Cut Line dengan Design pertama sejak awal antrean atau sejak Cut Line sebelumnya. Design tanpa pasangan tidak memicu pembuatan Layer 2.
++ Menambahkan DefaultSize 325 x 485 mm dan ExtendedSize 335 x 487 mm untuk seluruh halaman; MasterPage dan PerPage juga memakai 325 x 485 mm.
++ MasterPage memindahkan tiga layer scpro2 dari Active Page ke Master Page; PerPage mengembalikannya ke Active Page.
++ Operasi Process dan setiap tombol page setup dibungkus CommandGroup, dengan pemulihan unit/page serta pesan error per operasi.
+~ Memperbaiki urutan depth scpro2 menjadi printmargin, regmarks, printonly dari atas ke bawah serta pemeriksaan tujuan layer setelah konversi Master/PerPage.
+~ Cleanup Die A dilakukan setelah seluruh antrean dipindahkan: layer lokal bernama Layer 2 dan seterusnya hanya dihapus jika kosong; layer berisi objek dipertahankan dan dilaporkan.
