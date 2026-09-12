@@ -74,6 +74,14 @@ Public Sub ADApplyPageSetup(ByVal widthMM As Double, ByVal heightMM As Double, _
     For Each pg In doc.Pages
         operation = "Mengatur ukuran Page " & CStr(pg.Index)
         pg.SetSize widthMM, heightMM
+        If sensorMode <> "" Then
+            operation = "Mengatur print/export Layer 1 pada Page " & CStr(pg.Index)
+            Set ly = ADFindSensorLayer(pg, "Layer 1", False)
+            If Not ly Is Nothing Then ly.Printable = True
+            operation = "Mengatur print/export Layer 2 pada Page " & CStr(pg.Index)
+            Set ly = ADFindSensorLayer(pg, "Layer 2", False)
+            If Not ly Is Nothing Then ly.Printable = False
+        End If
     Next pg
 
     For i = 1 To sensorLayers.Count
