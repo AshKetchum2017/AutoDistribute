@@ -336,4 +336,8 @@ AutoDistribute saat ini mencakup:
 
 Pengembangan berikutnya dapat memperluas workflow ini tanpa mengubah fungsi utama AutoDistribute sebagai alat untuk mengurangi pekerjaan distribusi objek secara manual di CorelDRAW.
 
+---
+
+## Feedback and Development
+
 Source boleh dipelajari dan dikembangkan, dan issue/feedback tentang bug, edge case, CorelDRAW API, architecture, atau improvement sangat dihargai.
