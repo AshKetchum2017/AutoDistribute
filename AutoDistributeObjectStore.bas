@@ -74,14 +74,6 @@ Public Sub ADApplyPageSetup(ByVal widthMM As Double, ByVal heightMM As Double, _
     For Each pg In doc.Pages
         operation = "Mengatur ukuran Page " & CStr(pg.Index)
         pg.SetSize widthMM, heightMM
-        If sensorMode <> "" Then
-            operation = "Mengatur print/export Layer 1 pada Page " & CStr(pg.Index)
-            Set ly = ADFindSensorLayer(pg, "Layer 1", False)
-            If Not ly Is Nothing Then ly.Printable = True
-            operation = "Mengatur print/export Layer 2 pada Page " & CStr(pg.Index)
-            Set ly = ADFindSensorLayer(pg, "Layer 2", False)
-            If Not ly Is Nothing Then ly.Printable = False
-        End If
     Next pg
 
     For i = 1 To sensorLayers.Count
@@ -104,6 +96,26 @@ Public Sub ADApplyPageSetup(ByVal widthMM As Double, ByVal heightMM As Double, _
             "Jumlah object pada layer " & layerName & " berubah setelah perpindahan. Gunakan Undo untuk memulihkan operasi."
     Next i
     If sensorMode <> "" Then ADOrderSensorLayers destinationPage, sensorMode = "Master", operation
+    If sensorMode <> "" Then
+        For Each pg In doc.Pages
+            operation = "Mengaktifkan Page " & CStr(pg.Index) & " untuk print/export"
+            pg.Activate
+            For Each ly In pg.Layers
+                If Not ly.Master Then
+                    Select Case LCase$(Trim$(ly.Name))
+                        Case "layer 1"
+                            operation = "Mengaktifkan print/export Page " & CStr(pg.Index) & " - " & ly.Name
+                            ly.Printable = True
+                            If Not ly.Printable Then Err.Raise 5, , "Printable tetap False setelah diaktifkan."
+                        Case "layer 2"
+                            operation = "Menonaktifkan print/export Page " & CStr(pg.Index) & " - " & ly.Name
+                            ly.Printable = False
+                            If ly.Printable Then Err.Raise 5, , "Printable tetap True setelah dinonaktifkan."
+                    End Select
+                End If
+            Next ly
+        Next pg
+    End If
 
     operation = "Memulihkan page dan unit dokumen"
     startPage.Activate
@@ -224,6 +236,7 @@ Public Sub ADProcessStoredObjects(ByVal useKissA As Boolean, ByVal useDieA As Bo
     Dim roles() As String
     Dim executionOrder() As Long
     Dim pageOffsets() As Long
+    Dim pageHasCutLine() As Boolean
     Dim executionIndex As Long
     Dim roleIndex As Long
     Dim pageIndex As Long
@@ -260,6 +273,14 @@ Public Sub ADProcessStoredObjects(ByVal useKissA As Boolean, ByVal useDieA As Bo
     Next entryIndex
     operation = "Menentukan urutan dan page tujuan antrean"
     ADBuildExecutionPlan roles, useKissA, sequentially, executionOrder, pageOffsets
+    ReDim pageHasCutLine(0 To mObjectCount - 1)
+    If useKissA And sequentially Then
+        For executionIndex = 0 To mObjectCount - 1
+            If roles(executionOrder(executionIndex)) = AD_ROLE_CUT_LINE Then
+                pageHasCutLine(pageOffsets(executionIndex)) = True
+            End If
+        Next executionIndex
+    End If
 
     oldUnit = doc.Unit
     unitSaved = True
@@ -291,6 +312,9 @@ Public Sub ADProcessStoredObjects(ByVal useKissA As Boolean, ByVal useDieA As Bo
             End If
             targetShape.MoveToLayer targetLayer
             targetLayer.Printable = Not (useKissA And roleIndex = 0)
+            If useKissA And sequentially And roleIndex = 0 Then
+                targetLayer.Printable = Not pageHasCutLine(pageOffsets(executionIndex))
+            End If
             operation = "Rotasi dan posisi Obj. ID: /" & CStr(targetShape.StaticID)
             If rotateCW Then targetShape.Rotate -90
             If rotateCCW Then targetShape.Rotate 90
@@ -514,6 +538,14 @@ Private Function ADFindShapeByStaticID(ByVal staticID As Long) As Shape
             End If
         Next layerItem
     Next pageItem
+    ' Master Page tidak tercakup dalam loop halaman biasa di atas.
+    For Each layerItem In ActiveDocument.MasterPage.Layers
+        Set foundShape = ADFindShapeInRange(layerItem.Shapes, staticID)
+        If Not foundShape Is Nothing Then
+            Set ADFindShapeByStaticID = foundShape
+            Exit Function
+        End If
+    Next layerItem
 End Function
 
 Private Function ADFindShapeInRange(ByVal shapesToSearch As Shapes, ByVal staticID As Long) As Shape
