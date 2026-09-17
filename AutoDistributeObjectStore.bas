@@ -65,10 +65,10 @@ Public Sub ADApplyPageSetup(ByVal widthMM As Double, ByVal heightMM As Double, _
 
     oldUnit = doc.Unit
     unitSaved = True
+    doc.Unit = cdrMillimeter
     operation = "BeginCommandGroup Page Setup"
     doc.BeginCommandGroup "Auto Distribute Page Setup"
     commandGroupOpen = True
-    doc.Unit = cdrMillimeter
     operation = "Mengatur ukuran default dokumen"
     doc.MasterPage.SetSize widthMM, heightMM
     For Each pg In doc.Pages

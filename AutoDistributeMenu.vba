@@ -25,20 +25,30 @@ Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
     ADClearObjectDraft Me
 End Sub
 
+Private Sub ADApplyWorksheetSize(ByVal widthMM As Double, ByVal heightMM As Double, _
+    Optional ByVal sensorMode As String = "")
+    Dim doc As Document
+    On Error Resume Next
+    Set doc = ActiveDocument
+    If Not doc Is Nothing Then doc.Unit = cdrMillimeter
+    On Error GoTo 0
+    ADApplyPageSetup widthMM, heightMM, sensorMode
+End Sub
+
 Private Sub cmdDefaultSize_Click()
-    ADApplyPageSetup 325#, 485#
+    ADApplyWorksheetSize 325#, 485#
 End Sub
 
 Private Sub cmdExtendedSize_Click()
-    ADApplyPageSetup 335#, 487#
+    ADApplyWorksheetSize 335#, 487#
 End Sub
 
 Private Sub cmdMasterPage_Click()
-    ADApplyPageSetup 325#, 485#, "Master"
+    ADApplyWorksheetSize 325#, 485#, "Master"
 End Sub
 
 Private Sub cmdPerPage_Click()
-    ADApplyPageSetup 325#, 485#, "PerPage"
+    ADApplyWorksheetSize 325#, 485#, "PerPage"
 End Sub
 
 Private Sub cmdProcess_Click()
@@ -47,6 +57,12 @@ Private Sub cmdProcess_Click()
     If Not optKissA.Value And Not optDieA.Value Then
         MsgBox "Pilih mode Kiss A atau Die A terlebih dahulu.", vbExclamation, "Auto Distribute"
         Exit Sub
+    End If
+
+    If optKissA.Value Then
+        ADApplyWorksheetSize 335#, 487#
+    ElseIf optDieA.Value Then
+        ADApplyWorksheetSize 325#, 485#
     End If
 
     ADProcessStoredObjects optKissA.Value, optDieA.Value, chkCWRotate90.Value, _
