@@ -14,7 +14,7 @@ Private mObjectCount As Long
 Private mDraftDocument As Document
 
 Public Sub ADApplyPageSetup(ByVal widthMM As Double, ByVal heightMM As Double, _
-    Optional ByVal sensorMode As String = "")
+    Optional ByVal sensorMode As String = "", Optional ByVal raiseOnFailure As Boolean = False)
     Dim doc As Document
     Dim startPage As Page
     Dim destinationPage As Page
@@ -134,6 +134,8 @@ SetupFailed:
     If unitSaved Then doc.Unit = oldUnit
     If commandGroupOpen Then doc.EndCommandGroup
     On Error GoTo 0
+    If raiseOnFailure Then Err.Raise errorNumber, "ADApplyPageSetup", _
+        "Operasi: " & operation & vbCrLf & errorDescription
     MsgBox "Operasi: " & operation & vbCrLf & "Error " & CStr(errorNumber) & vbCrLf & _
         errorDescription, vbExclamation, "Auto Distribute - Page Setup"
 End Sub

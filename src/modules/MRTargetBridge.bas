@@ -47,3 +47,45 @@ Failed:
     Err.Raise errorNumber, "MRTargetBridge.OpenMacro", operation & vbCrLf & _
         "Source awal: " & errorSource & vbCrLf & errorDescription
 End Function
+
+' Semantic preflight only: no UserForm or document access.
+Public Function ValidateBehavior(ByVal script As String, ByVal observer As Object, ByVal token As String) As Boolean
+    Dim contract As ADBehaviorContract, block As MRBehaviorBlock
+    Dim number As Long, source As String, description As String
+
+    On Error GoTo Failed
+    CallByName observer, "BehaviorBridgeEntered", VbMethod, token
+    Set contract = New ADBehaviorContract
+    Set block = contract.Validate(script)
+    CallByName observer, "BehaviorBridgeFinished", VbMethod, token, 0&, vbNullString
+    ValidateBehavior = True
+    Exit Function
+Failed:
+    number = Err.Number: source = Err.Source: description = Err.Description
+    On Error Resume Next
+    CallByName observer, "BehaviorBridgeFinished", VbMethod, token, number, _
+        "Source asli: " & source & vbCrLf & description
+    On Error GoTo 0
+    ValidateBehavior = False
+End Function
+
+Public Function RunBehavior(ByVal script As String, ByVal observer As Object, ByVal token As String) As Boolean
+    Dim session As ADBehaviorSession
+    Dim number As Long, source As String, description As String
+
+    On Error GoTo Failed
+    CallByName observer, "BehaviorBridgeEntered", VbMethod, token
+    Set session = New ADBehaviorSession
+    session.Start script, observer, token
+    CallByName observer, "BehaviorBridgeFinished", VbMethod, token, 0&, vbNullString
+    RunBehavior = True
+    Exit Function
+Failed:
+    number = Err.Number: source = Err.Source: description = Err.Description
+    On Error Resume Next
+    CallByName observer, "BehaviorBridgeFinished", VbMethod, token, number, _
+        "Source asli: " & source & vbCrLf & description
+    On Error GoTo 0
+    ' The runner receives the failure through its token callback.
+    RunBehavior = False
+End Function

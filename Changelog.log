@@ -1,7 +1,9 @@
-2026-07-00
+------------------------------------------------------------------------------------------------------------------------------------------------------
+2026-07-01
 + Menambahkan Auto Distribute untuk mendistribusikan objek terpilih secara otomatis.
 + Menambahkan opsi Pre-Sensor, Post-Sensor, Rotate -90, Master Sensor, dan Per-Page Sensor.
 
+------------------------------------------------------------------------------------------------------------------------------------------------------
 2026-09-11
 [Auto Distribute UF]
 + Menggabungkan ObjectContainer ke Main UF agar Design, Cut Line, Remove, Clear, dan Objects berada dalam satu alur.
@@ -15,7 +17,17 @@
 ~ Cleanup Die A kini hanya menghapus layer lokal kosong dan melaporkan layer yang masih berisi objek.
 ~ Operasi Process dan page setup dibungkus CommandGroup agar lebih aman saat error.
 
+------------------------------------------------------------------------------------------------------------------------------------------------------
 2026-09-13
 + Pencarian objek antrean kini mencakup Master Page dan isi group, sehingga objek dapat diproses tanpa dipindahkan manual.
 ~ Antrean Objects otomatis dikosongkan saat form ditutup.
 ~ MasterPage/PerPage menstabilkan print/export Layer 1 dan Layer 2. Kiss A Sequentially tetap mengaktifkan Design tanpa pasangan Cut Line. Uji user sukses.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+2026-09-17
+~ Merapikan logika perubahan ukuran lembar kerja.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+2026-09-28
+[Auto Distribute UF - MacroBehavior]
++ AutoDistributeMenu terhubung ke MacroRunner. Action berjalan otomatis tanpa `@cmdProcess`; dengan token itu, pengisian objek dan action dilakukan manual. `@cmdClose` otomatis bila tepat mengikuti PerPage/MasterPage yang berhasil.
