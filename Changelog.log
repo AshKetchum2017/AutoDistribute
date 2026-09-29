@@ -31,3 +31,9 @@
 2026-09-28
 [Auto Distribute UF - MacroBehavior]
 + AutoDistributeMenu terhubung ke MacroRunner. Action berjalan otomatis tanpa `@cmdProcess`; dengan token itu, pengisian objek dan action dilakukan manual. `@cmdClose` otomatis bila tepat mengikuti PerPage/MasterPage yang berhasil.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+2026-09-29
+[Auto Distribute UF]
+~ Process, PerPage, dan MasterPage kini mengatur unit dokumen serta tampilan ke milimeter; page baru dari Process mengikuti ukuran Page 1.
+~ Process menggabungkan pengaturan page dan distribusi objek dalam satu CommandGroup.

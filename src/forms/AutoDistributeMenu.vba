@@ -41,13 +41,9 @@ Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
 End Sub
 
 Private Sub ADApplyWorksheetSize(ByVal widthMM As Double, ByVal heightMM As Double, _
-    Optional ByVal sensorMode As String = "", Optional ByVal reportToRunner As Boolean = False)
-    Dim doc As Document
-    On Error Resume Next
-    Set doc = ActiveDocument
-    If Not doc Is Nothing Then doc.Unit = cdrMillimeter
-    On Error GoTo 0
-    ADApplyPageSetup widthMM, heightMM, sensorMode, reportToRunner
+    Optional ByVal sensorMode As String = "", Optional ByVal reportToRunner As Boolean = False, _
+    Optional ByVal manageCommandGroup As Boolean = True)
+    ADApplyPageSetup widthMM, heightMM, sensorMode, reportToRunner, manageCommandGroup
 End Sub
 
 Private Sub cmdDefaultSize_Click()
@@ -79,6 +75,13 @@ ActionFailed:
 End Sub
 
 Private Sub cmdProcess_Click()
+    Dim doc As Document
+    Dim commandGroupOpen As Boolean
+    Dim errorNumber As Long
+    Dim errorSource As String
+    Dim errorDescription As String
+    Dim processResult As Variant
+
     If Not MRCanRunAction("cmdprocess") Then Exit Sub
     On Error GoTo ProcessFailed
 
@@ -87,19 +90,37 @@ Private Sub cmdProcess_Click()
         Exit Sub
     End If
 
+    Set doc = ActiveDocument
+    doc.BeginCommandGroup "Auto Distribute Process"
+    commandGroupOpen = True
     If optKissA.Value Then
-        ADApplyWorksheetSize 335#, 487#, vbNullString, pMRBehaviorActive And Not pMRBehaviorFailed
+        ADApplyWorksheetSize 335#, 487#, vbNullString, True, False
     ElseIf optDieA.Value Then
-        ADApplyWorksheetSize 325#, 485#, vbNullString, pMRBehaviorActive And Not pMRBehaviorFailed
+        ADApplyWorksheetSize 325#, 485#, vbNullString, True, False
     End If
 
     ADProcessStoredObjects optKissA.Value, optDieA.Value, chkCWRotate90.Value, _
-        chkCCWRotate90.Value, chkSequentially.Value
+        chkCCWRotate90.Value, chkSequentially.Value, False, False, processResult
+    doc.Unit = cdrMillimeter
+    doc.Rulers.HUnits = cdrMillimeter
+    doc.Rulers.VUnits = cdrMillimeter
+    doc.EndCommandGroup
+    commandGroupOpen = False
+    MsgBox CStr(processResult(0)) & " object selesai diproses.", vbInformation, "Auto Distribute"
+    If Len(CStr(processResult(1))) > 0 Then MsgBox _
+        "Layer berikut masih berisi object dan tidak dihapus:" & vbCrLf & CStr(processResult(1)), _
+        vbExclamation, "Auto Distribute"
     MRCompleteAction "cmdprocess"
     Exit Sub
 
 ProcessFailed:
-    MRHandleActionFailure "cmdProcess", Err.Number, Err.Source, Err.Description
+    errorNumber = Err.Number
+    errorSource = Err.Source
+    errorDescription = Err.Description
+    On Error Resume Next
+    If commandGroupOpen Then doc.EndCommandGroup
+    On Error GoTo 0
+    MRHandleActionFailure "cmdProcess", errorNumber, errorSource, errorDescription
 
 End Sub
 

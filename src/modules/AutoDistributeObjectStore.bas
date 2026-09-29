@@ -14,15 +14,14 @@ Private mObjectCount As Long
 Private mDraftDocument As Document
 
 Public Sub ADApplyPageSetup(ByVal widthMM As Double, ByVal heightMM As Double, _
-    Optional ByVal sensorMode As String = "", Optional ByVal raiseOnFailure As Boolean = False)
+    Optional ByVal sensorMode As String = "", Optional ByVal raiseOnFailure As Boolean = False, _
+    Optional ByVal manageCommandGroup As Boolean = True)
     Dim doc As Document
     Dim startPage As Page
     Dim destinationPage As Page
     Dim pg As Page
     Dim ly As Layer
     Dim sensorLayers As Collection
-    Dim oldUnit As cdrUnit
-    Dim unitSaved As Boolean
     Dim commandGroupOpen As Boolean
     Dim i As Long
     Dim operation As String
@@ -63,12 +62,14 @@ Public Sub ADApplyPageSetup(ByVal widthMM As Double, ByVal heightMM As Double, _
         Next ly
     End If
 
-    oldUnit = doc.Unit
-    unitSaved = True
     doc.Unit = cdrMillimeter
-    operation = "BeginCommandGroup Page Setup"
-    doc.BeginCommandGroup "Auto Distribute Page Setup"
-    commandGroupOpen = True
+    doc.Rulers.HUnits = cdrMillimeter
+    doc.Rulers.VUnits = cdrMillimeter
+    If manageCommandGroup Then
+        operation = "BeginCommandGroup Page Setup"
+        doc.BeginCommandGroup "Auto Distribute Page Setup"
+        commandGroupOpen = True
+    End If
     operation = "Mengatur ukuran default dokumen"
     doc.MasterPage.SetSize widthMM, heightMM
     For Each pg In doc.Pages
@@ -117,13 +118,13 @@ Public Sub ADApplyPageSetup(ByVal widthMM As Double, ByVal heightMM As Double, _
         Next pg
     End If
 
-    operation = "Memulihkan page dan unit dokumen"
+    operation = "Memulihkan page aktif"
     startPage.Activate
-    doc.Unit = oldUnit
-    unitSaved = False
-    operation = "EndCommandGroup Page Setup"
-    doc.EndCommandGroup
-    commandGroupOpen = False
+    If commandGroupOpen Then
+        operation = "EndCommandGroup Page Setup"
+        doc.EndCommandGroup
+        commandGroupOpen = False
+    End If
     Exit Sub
 
 SetupFailed:
@@ -131,7 +132,6 @@ SetupFailed:
     errorDescription = Err.Description
     On Error Resume Next
     If Not startPage Is Nothing Then startPage.Activate
-    If unitSaved Then doc.Unit = oldUnit
     If commandGroupOpen Then doc.EndCommandGroup
     On Error GoTo 0
     If raiseOnFailure Then Err.Raise errorNumber, "ADApplyPageSetup", _
@@ -229,7 +229,8 @@ End Sub
 
 Public Sub ADProcessStoredObjects(ByVal useKissA As Boolean, ByVal useDieA As Boolean, _
     Optional ByVal rotateCW As Boolean = False, Optional ByVal rotateCCW As Boolean = False, _
-    Optional ByVal sequentially As Boolean = False)
+    Optional ByVal sequentially As Boolean = False, Optional ByVal manageCommandGroup As Boolean = True, _
+    Optional ByVal showResult As Boolean = True, Optional ByRef processResult As Variant)
     Dim doc As Document
     Dim startPage As Page
     Dim targetPage As Page
@@ -286,16 +287,19 @@ Public Sub ADProcessStoredObjects(ByVal useKissA As Boolean, ByVal useDieA As Bo
 
     oldUnit = doc.Unit
     unitSaved = True
-    operation = "BeginCommandGroup"
-    doc.BeginCommandGroup "Auto Distribute Object Container"
-    commandGroupOpen = True
+    If manageCommandGroup Then
+        operation = "BeginCommandGroup"
+        doc.BeginCommandGroup "Auto Distribute Object Container"
+        commandGroupOpen = True
+    End If
     doc.Unit = cdrMillimeter
     For executionIndex = 0 To mObjectCount - 1
             entryIndex = executionOrder(executionIndex)
             pageIndex = startPage.Index + pageOffsets(executionIndex)
             operation = "Menyiapkan Page " & CStr(pageIndex)
             If pageIndex > doc.Pages.Count Then
-                Set targetPage = doc.InsertPagesEx(1, False, doc.Pages.Count, 335#, 487#)
+                Set targetPage = doc.InsertPagesEx(1, False, doc.Pages.Count, _
+                    doc.Pages(1).SizeWidth, doc.Pages(1).SizeHeight)
             Else
                 Set targetPage = doc.Pages(pageIndex)
             End If
@@ -331,12 +335,17 @@ Public Sub ADProcessStoredObjects(ByVal useKissA As Boolean, ByVal useDieA As Bo
     startPage.Activate
     doc.Unit = oldUnit
     unitSaved = False
-    operation = "EndCommandGroup"
-    doc.EndCommandGroup
-    commandGroupOpen = False
-    MsgBox CStr(processedCount) & " object selesai diproses.", vbInformation, "Auto Distribute"
-    If Len(warnings) > 0 Then MsgBox "Layer berikut masih berisi object dan tidak dihapus:" & _
-        vbCrLf & warnings, vbExclamation, "Auto Distribute"
+    If commandGroupOpen Then
+        operation = "EndCommandGroup"
+        doc.EndCommandGroup
+        commandGroupOpen = False
+    End If
+    If Not IsMissing(processResult) Then processResult = Array(processedCount, warnings)
+    If showResult Then
+        MsgBox CStr(processedCount) & " object selesai diproses.", vbInformation, "Auto Distribute"
+        If Len(warnings) > 0 Then MsgBox "Layer berikut masih berisi object dan tidak dihapus:" & _
+            vbCrLf & warnings, vbExclamation, "Auto Distribute"
+    End If
     Exit Sub
 
 ProcessFailed:
